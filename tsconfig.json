@@ -21,9 +21,11 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "uiKit":["./src/uiKit"],
       "@/*": ["./src/*"]
+
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "__test__/functions/FixForFirstNum.test.js", "__test__/functions/FixForFirstNum.test.js", "src/utils/__tests__/FixForFirstNum.test.js"],
   "exclude": ["node_modules"]
 }

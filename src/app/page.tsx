@@ -1,91 +1,120 @@
-import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import styles from './page.module.css'
+"use client";
 
-const inter = Inter({ subsets: ['latin'] })
+import { useMemo, useState } from "react";
+import styled from "styled-components";
+import { Container, Text } from "uiKit";
+
+import Button from "@/components/Button";
+import Table from "@/components/Table";
+import { allCurrency, API_KEY } from "@/constants/constants";
+import { useAllCoins } from "@/hooks/useAllCoins";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { Fix, FixForFirstNum, roundCounter } from "@/utils/formaters";
+
+const TitleForTable = [
+  { name: "№" },
+  { name: "Name" },
+  { name: "Price", sort: true },
+  { name: "Circulating Supply", sort: true },
+  { name: "Market Cap" },
+  { name: "Category" },
+];
 
 export default function Home() {
+  const { coins } = useAllCoins(API_KEY);
+  const { USDinBTK, USDinETH } = useExchangeRates();
+
+  const [currentCurencyCount, setCurntCurrencyCount] = useState(0);
+
+  const currentCurrency = allCurrency[currentCurencyCount];
+
+  const handleOnClick = () => {
+    setCurntCurrencyCount(
+      roundCounter(currentCurencyCount, allCurrency.length)
+    );
+  };
+
+  const dataForTable = useMemo(() => {
+    if (USDinBTK && USDinETH && coins) {
+      const newCoins = coins.map((coin, index) => {
+        return {
+          number: index + 1,
+          name: (
+            <TextS>
+              <span>{coin.name}</span> {coin.symbol}
+            </TextS>
+          ),
+          value: {
+            USD: (
+              <Text>
+                <span>USD</span> {FixForFirstNum(coin.values.USD.price, 2)}
+              </Text>
+            ),
+            ETH: (
+              <Text>
+                <span>ETH</span>{" "}
+                {FixForFirstNum(coin.values.USD.price / USDinETH, 2)}
+              </Text>
+            ),
+            BTC: (
+              <Text>
+                <span>BTC</span>{" "}
+                {FixForFirstNum(coin.values.USD.price / USDinBTK, 2)}
+              </Text>
+            ),
+          },
+          circulatingSupply: coin.circulatingSupply,
+          marketCap: {
+            USD: (
+              <Text>
+                <span>USD</span> {Fix(coin.values.USD.marketCap, 2)}
+              </Text>
+            ),
+            ETH: (
+              <Text>
+                <span>ETH</span> {Fix(coin.values.USD.marketCap / USDinETH, 2)}
+              </Text>
+            ),
+            BTC: (
+              <Text>
+                <span>BTC</span> {Fix(coin.values.USD.marketCap / USDinBTK, 2)}
+              </Text>
+            ),
+          },
+          category: coin.category,
+        };
+      });
+      return newCoins;
+    }
+  }, [coins, USDinETH, USDinBTK]);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <Container>
+      <Text as="h1" align="center">
+        Current cryptocurrency rates
+      </Text>
+      <Wrapper>
+        <Button onClick={handleOnClick}>{currentCurrency}</Button>
+      </Wrapper>
+      {dataForTable && (
+        <Table
+          titles={TitleForTable}
+          data={dataForTable}
+          currency={currentCurrency}
         />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      )}
+    </Container>
+  );
 }
+
+const TextS = styled(Text)`
+  span {
+    color: blue;
+  }
+`;
+
+const Wrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 16px;
+`;
